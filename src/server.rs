@@ -259,8 +259,7 @@ impl MisfinServer {
     pub fn new(config: MisfinServerConfig, store: MailboxStore) -> Result<Self, MisfinServerError> {
         let cert = CertificateDer::from(config.tls_certificate_der);
         let key = PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(config.tls_private_key_pkcs8_der));
-        let provider = Arc::new(rustls::crypto::aws_lc_rs::default_provider());
-        let tls_config = rustls::ServerConfig::builder_with_provider(provider)
+        let tls_config = rustls::ServerConfig::builder_with_provider(crate::client::tls_provider())
             .with_safe_default_protocol_versions()
             .map_err(|error| MisfinServerError::Config(error.to_string()))?
             .with_client_cert_verifier(Arc::new(AcceptAnyClient))
@@ -760,8 +759,7 @@ mod tests {
             }
         }
 
-        let provider = Arc::new(rustls::crypto::aws_lc_rs::default_provider());
-        let config = rustls::ClientConfig::builder_with_provider(provider)
+        let config = rustls::ClientConfig::builder_with_provider(crate::client::tls_provider())
             .with_safe_default_protocol_versions()
             .unwrap()
             .dangerous()

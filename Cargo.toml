@@ -1,6 +1,6 @@
 [package]
 name = "misfin"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/mark-ik/misfin"
@@ -12,13 +12,18 @@ categories = ["email", "network-programming"]
 default = []
 # Expose test-only helpers to downstream integration tests.
 test-support = []
-# The sending client: one async TLS transaction per message.
+# The sending client: one async TLS transaction per message. Needs a TLS
+# provider feature too: `aws-lc` or `ring`.
 client = ["dep:rustls", "dep:tokio", "dep:tokio-rustls"]
+# TLS crypto providers (pick one; `aws-lc` wins when both are enabled).
+# `ring` builds without a C toolchain.
+aws-lc = ["rustls?/aws-lc-rs", "tokio-rustls?/aws_lc_rs"]
+ring = ["rustls?/ring", "tokio-rustls?/ring"]
 # The receive server: async TLS listener, redb-backed mailbox, and sender
 # identity extraction from client certificates.
 server = ["client", "dep:redb", "dep:x509-parser"]
 # The `misfin` command-line tool (id / send / serve / inbox).
-cli = ["server", "tokio/signal"]
+cli = ["server", "aws-lc", "tokio/signal"]
 
 [[bin]]
 name = "misfin"
@@ -33,9 +38,9 @@ rcgen = "0.13"
 sha2 = "0.10"
 url = "2.5"
 log = "0.4"
-rustls = { version = "0.23", default-features = false, features = ["logging", "std", "tls12", "aws-lc-rs"], optional = true }
+rustls = { version = "0.23", default-features = false, features = ["logging", "std", "tls12"], optional = true }
 tokio = { version = "1", features = ["io-util", "net", "rt", "macros", "sync", "time"], optional = true }
-tokio-rustls = { version = "0.26", default-features = false, features = ["aws_lc_rs", "tls12", "logging"], optional = true }
+tokio-rustls = { version = "0.26", default-features = false, features = ["tls12", "logging"], optional = true }
 redb = { version = "2", optional = true }
 x509-parser = { version = "0.18", optional = true }
 

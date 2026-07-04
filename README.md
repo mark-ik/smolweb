@@ -54,7 +54,8 @@ Feature flags:
 | feature | adds |
 | --- | --- |
 | *(none)* | addresses, gemmail parse/compose, status codes, identity minting/storage |
-| `client` | `send` — async TLS delivery (tokio + rustls) |
+| `client` | `send` — async TLS delivery (tokio + rustls); pick a provider: `aws-lc` or `ring` |
+| `aws-lc` / `ring` | the TLS crypto provider (`ring` builds without a C toolchain; `aws-lc` wins if both) |
 | `server` | `MisfinServer` + redb `MailboxStore`, sender-identity extraction, 63 on changed fingerprints |
 | `cli` | the `misfin` binary |
 

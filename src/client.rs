@@ -27,6 +27,21 @@ use super::{
     normalize_fingerprint,
 };
 
+/// The TLS crypto provider, selected by the `aws-lc` / `ring` cargo features
+/// (`aws-lc` wins when both are enabled).
+#[cfg(any(feature = "aws-lc", feature = "ring"))]
+pub(crate) fn tls_provider() -> Arc<rustls::crypto::CryptoProvider> {
+    #[cfg(feature = "aws-lc")]
+    return Arc::new(rustls::crypto::aws_lc_rs::default_provider());
+    #[cfg(all(feature = "ring", not(feature = "aws-lc")))]
+    return Arc::new(rustls::crypto::ring::default_provider());
+}
+
+#[cfg(not(any(feature = "aws-lc", feature = "ring")))]
+compile_error!(
+    "misfin's `client`/`server` features need a TLS provider: enable the `aws-lc` or `ring` feature"
+);
+
 /// Options for a [`send`]: the sender's identity (strongly recommended — most
 /// servers reply 60 without one), an alternate port, a pinned server
 /// fingerprint, and the per-step IO timeout.
@@ -35,6 +50,10 @@ pub struct SendOptions {
     /// The client certificate presented in the handshake. `None` sends
     /// anonymously; spec-following servers will likely reply 60.
     pub identity: Option<MisfinIdentityMaterial>,
+    /// Additional DER certificates presented after the identity's leaf — the
+    /// spec §3.1 advanced setup where a mailbox certificate is signed by its
+    /// mailserver's host certificate. Usually empty.
+    pub extra_chain_der: Vec<Vec<u8>>,
     /// Overrides the well-known port (1958). Best practice: mailservers stay
     /// on the known port; this exists for clients reaching odd deployments.
     pub port: Option<u16>,
@@ -141,21 +160,30 @@ pub async fn send(
     let request = build_request(recipient, message)?;
     let timeout = options.timeout.unwrap_or(Duration::from_secs(30));
 
-    let provider = Arc::new(rustls::crypto::aws_lc_rs::default_provider());
-    let builder = rustls::ClientConfig::builder_with_provider(provider)
+    let builder = rustls::ClientConfig::builder_with_provider(tls_provider())
         .with_safe_default_protocol_versions()
         .map_err(|error| SendError::Tls(error.to_string()))?
         .dangerous()
         .with_custom_certificate_verifier(Arc::new(AcceptAnySelfSigned));
     let config = match &options.identity {
-        Some(identity) => builder
-            .with_client_auth_cert(
-                vec![CertificateDer::from(identity.certificate_der.clone())],
-                PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(
-                    identity.private_key_pkcs8_der.clone(),
-                )),
-            )
-            .map_err(|error| SendError::Tls(error.to_string()))?,
+        Some(identity) => {
+            let mut chain = vec![CertificateDer::from(identity.certificate_der.clone())];
+            chain.extend(
+                options
+                    .extra_chain_der
+                    .iter()
+                    .cloned()
+                    .map(CertificateDer::from),
+            );
+            builder
+                .with_client_auth_cert(
+                    chain,
+                    PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(
+                        identity.private_key_pkcs8_der.clone(),
+                    )),
+                )
+                .map_err(|error| SendError::Tls(error.to_string()))?
+        }
         None => builder.with_no_client_auth(),
     };
     let connector = TlsConnector::from(Arc::new(config));
