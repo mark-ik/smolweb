@@ -1,0 +1,43 @@
+[package]
+name = "misfin"
+version = "0.0.2"
+edition = "2024"
+license = "MPL-2.0"
+repository = "https://github.com/mark-ik/misfin"
+description = "An embeddable implementation of the Misfin mail protocol: identities, gemmail, a sending client, and a receive server. Not the reference implementation — the protocol is lem's (misfin.org)."
+keywords = ["misfin", "gemini", "mail", "smallweb", "gemtext"]
+categories = ["email", "network-programming"]
+
+[features]
+default = []
+# Expose test-only helpers to downstream integration tests.
+test-support = []
+# The sending client: one async TLS transaction per message.
+client = ["dep:rustls", "dep:tokio", "dep:tokio-rustls"]
+# The receive server: async TLS listener, redb-backed mailbox, and sender
+# identity extraction from client certificates.
+server = ["client", "dep:redb", "dep:x509-parser"]
+# The `misfin` command-line tool (id / send / serve / inbox).
+cli = ["server", "tokio/signal"]
+
+[[bin]]
+name = "misfin"
+path = "src/bin/misfin.rs"
+required-features = ["cli"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rustls-pki-types = "1"
+rcgen = "0.13"
+sha2 = "0.10"
+url = "2.5"
+log = "0.4"
+rustls = { version = "0.23", default-features = false, features = ["logging", "std", "tls12", "aws-lc-rs"], optional = true }
+tokio = { version = "1", features = ["io-util", "net", "rt", "macros", "sync", "time"], optional = true }
+tokio-rustls = { version = "0.26", default-features = false, features = ["aws_lc_rs", "tls12", "logging"], optional = true }
+redb = { version = "2", optional = true }
+x509-parser = { version = "0.18", optional = true }
+
+[dev-dependencies]
+tempfile = "3"
