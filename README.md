@@ -56,7 +56,7 @@ Feature flags:
 | *(none)* | addresses, gemmail parse/compose, status codes, identity minting/storage |
 | `client` | `send` — async TLS delivery (tokio + rustls) |
 | `server` | `MisfinServer` + redb `MailboxStore`, sender-identity extraction, 63 on changed fingerprints |
-| `cli`    | the `misfin` binary |
+| `cli` | the `misfin` binary |
 
 ## CLI
 
@@ -81,6 +81,7 @@ misfin inbox mark@example.com
 | §3.2 TOFU validation | client: fingerprint pinning; server: per-identity pins, 63 on change |
 | §4 gemmail (sender/recipients/timestamp lines, subject) | parse + compose + reply-set helper (§4.2 dedupe rules) |
 | Multi-domain hosting, CA-signed mailbox certs (§3.1 advanced) | not implemented (single-domain; self-signed leaf only) |
+| misfin(A) — the superseded request-response-proceed prototype (data phase, MIME types, subject line; spec repo `old/`) | not implemented; nothing live speaks it. Its large-message role is the community's misfin(C) discussion, which we watch. A/B are wire-distinguishable (B's `misfin://` prefix), so coexistence stays possible if ever needed |
 | CGI (42), proxying (43), rate limiting (44), hashcash (64) | status codes surfaced; server does not implement the behaviors |
 
 Redirects (30/31) and retryable failures (4x) are reported to the caller, not
