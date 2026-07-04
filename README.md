@@ -88,5 +88,8 @@ acted on — per the best-practices document, resending is the user's decision.
 
 ## License
 
-MPL-2.0. Originally extracted from the [Mere](https://github.com/mark-ik/mere)
-browser workspace, which now consumes this crate.
+MIT, matching how the protocol's own repository licenses its reference
+implementation (the protocol itself is declared public domain there, and the
+spec documents are CC-BY-SA 4.0). Originally extracted from the
+[Mere](https://github.com/mark-ik/mere) browser workspace, which now consumes
+this crate.
