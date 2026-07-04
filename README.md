@@ -21,7 +21,7 @@ TLS transaction: the client connects (port 1958), both sides present
 self-signed x509 certificates, the client sends a single CRLF-terminated
 request of at most 2048 bytes —
 
-```
+```text
 misfin://mailbox@hostname <message>
 ```
 
@@ -51,8 +51,8 @@ reproduces the same certificate and fingerprint).
 
 Feature flags:
 
-| feature  | adds |
-|----------|------|
+| feature | adds |
+| --- | --- |
 | *(none)* | addresses, gemmail parse/compose, status codes, identity minting/storage |
 | `client` | `send` — async TLS delivery (tokio + rustls) |
 | `server` | `MisfinServer` + redb `MailboxStore`, sender-identity extraction, 63 on changed fingerprints |
@@ -60,7 +60,7 @@ Feature flags:
 
 ## CLI
 
-```
+```sh
 cargo install misfin --features cli
 
 misfin id mark@example.com --blurb "Mark"
@@ -72,7 +72,7 @@ misfin inbox mark@example.com
 ## Spec coverage (prototype B, 2023-05-11)
 
 | Spec section | State |
-|---|---|
+| --- | --- |
 | §1.1 transaction shape (single request/response, CRLF, close-notify) | client + server |
 | §1.2 request scheme, 2048-byte ceiling | enforced both sides (client refuses to build; server answers 59) |
 | §1.3 / §2 status codes | full typed vocabulary (`MisfinStatus`), all 19 defined codes |
