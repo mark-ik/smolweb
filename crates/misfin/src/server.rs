@@ -47,8 +47,7 @@ use tokio_rustls::TlsAcceptor;
 use super::helpers::sha256_hex;
 use super::x509_identity::{claimed_address, parse_certificate_identity};
 use super::{
-    IdentityCheck, MAX_REQUEST_BYTES, MailboxStore, MisfinAddress, MisfinSender,
-    MisfinServerError,
+    IdentityCheck, MAX_REQUEST_BYTES, MailboxStore, MisfinAddress, MisfinSender, MisfinServerError,
 };
 
 /// How long to wait for a client to finish sending its request before giving up.
@@ -157,10 +156,10 @@ impl Dispatcher {
 
         let fingerprint = sha256_hex(cert.as_ref());
         let identity = parse_certificate_identity(cert.as_ref(), now).ok();
-        if let Some(identity) = &identity {
-            if identity.expired {
-                return MisfinResponse::new(62, "Certificate is outside its validity window.");
-            }
+        if let Some(identity) = &identity
+            && identity.expired
+        {
+            return MisfinResponse::new(62, "Certificate is outside its validity window.");
         }
         let claimed = identity.as_ref().and_then(claimed_address);
         if claimed.is_none() && self.require_sender_identity {
@@ -169,7 +168,9 @@ impl Dispatcher {
 
         let sender = claimed.map(|address| MisfinSender {
             address,
-            blurb: identity.as_ref().and_then(|identity| identity.blurb.clone()),
+            blurb: identity
+                .as_ref()
+                .and_then(|identity| identity.blurb.clone()),
         });
 
         if let Some(sender) = &sender {
@@ -345,9 +346,7 @@ async fn handle_connection(acceptor: TlsAcceptor, dispatcher: Arc<Dispatcher>, t
                 .cloned();
             dispatcher.dispatch(&request, peer_cert.as_ref(), unix_now())
         }
-        Ok(RequestRead::TooLong) => {
-            MisfinResponse::new(59, "Request exceeds 2048 bytes.")
-        }
+        Ok(RequestRead::TooLong) => MisfinResponse::new(59, "Request exceeds 2048 bytes."),
         Ok(RequestRead::NotUtf8) => MisfinResponse::new(59, "Request is not UTF-8."),
         Err(error) => {
             log::debug!("misfin: reading request failed: {error}");
@@ -593,7 +592,11 @@ mod tests {
                 .status,
             20
         );
-        let response = dispatcher.dispatch("misfin://mark@example.test hi again", Some(&second), NOW + 1);
+        let response = dispatcher.dispatch(
+            "misfin://mark@example.test hi again",
+            Some(&second),
+            NOW + 1,
+        );
         assert_eq!(response.status, 63, "same claimed address, new key");
 
         // The original key keeps working.
@@ -608,12 +611,9 @@ mod tests {
     #[test]
     fn an_expired_certificate_is_rejected_with_62() {
         let (dispatcher, _) = dispatcher_for("mark@example.test");
-        let expired = crate::identity::identity_with_validity_years(
-            &spec("old@stale.test"),
-            2001,
-            2003,
-        )
-        .unwrap();
+        let expired =
+            crate::identity::identity_with_validity_years(&spec("old@stale.test"), 2001, 2003)
+                .unwrap();
         let cert = CertificateDer::from(expired.certificate_der);
         // `now` far beyond 2003.
         let response =
@@ -712,7 +712,9 @@ mod tests {
     /// produce (e.g. over-long request lines).
     async fn raw_exchange(addr: SocketAddr, line: &str) -> String {
         let mut tls = test_tls_client(addr).await;
-        tls.write_all(format!("{line}\r\n").as_bytes()).await.unwrap();
+        tls.write_all(format!("{line}\r\n").as_bytes())
+            .await
+            .unwrap();
         let mut raw = Vec::new();
         tls.read_to_end(&mut raw).await.unwrap();
         String::from_utf8_lossy(&raw).to_string()

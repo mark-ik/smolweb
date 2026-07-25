@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      # Default rustfmt, enforced for consistency (no custom style).
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Build (all targets)
+        run: cargo build --all-targets
+
+      - name: Test
+        run: cargo test
+
+      # These crates are libraries first: each protocol has to stand on its own
+      # without whatever another crate in the workspace happened to enable.
+      - name: Test (no default features)
+        run: cargo test --no-default-features
+
+      - name: Clippy (deny warnings)
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Docs (deny broken links)
+        run: cargo doc --all-features --no-deps
+        env:
+          RUSTDOCFLAGS: -D warnings
+
+  # These crates exist to be depended on by people outside this workspace, so
+  # rust-version = "1.88" is a promise rather than a note. Cargo records the
+  # number but never checks the code builds on it, so without this job the MSRV
+  # drifts upward silently and a downstream user meets a compile error instead
+  # of a clean "requires a newer rustc".
+  #
+  # 1.88 is measured, not aspirational: `time` (through misfin's TLS lane)
+  # declares 1.88 itself, and the protocol crates use let-chains, stabilized in
+  # 1.88. The edition-2024 floor of 1.85 fails all four.
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.88.0
+      - name: Build and test on the declared MSRV
+        run: cargo test

@@ -31,8 +31,7 @@ const MAILBOX_INDEX: MultimapTableDefinition<&str, u64> =
     MultimapTableDefinition::new("mailbox_index");
 const META: TableDefinition<&str, u64> = TableDefinition::new("meta");
 const SENDERS: TableDefinition<&str, u64> = TableDefinition::new("senders");
-const SENDER_IDENTITIES: TableDefinition<&str, &[u8]> =
-    TableDefinition::new("sender_identities");
+const SENDER_IDENTITIES: TableDefinition<&str, &[u8]> = TableDefinition::new("sender_identities");
 
 const NEXT_SEQ_KEY: &str = "next_seq";
 

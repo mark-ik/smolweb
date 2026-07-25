@@ -183,7 +183,9 @@ mod tests {
 
     #[test]
     fn codes_round_trip() {
-        for code in [20, 30, 31, 40, 41, 42, 43, 44, 45, 50, 51, 52, 53, 59, 60, 61, 62, 63, 64] {
+        for code in [
+            20, 30, 31, 40, 41, 42, 43, 44, 45, 50, 51, 52, 53, 59, 60, 61, 62, 63, 64,
+        ] {
             assert_eq!(MisfinStatus::from_code(code).code(), code);
         }
         assert_eq!(MisfinStatus::from_code(99), MisfinStatus::Other(99));
@@ -208,10 +210,7 @@ mod tests {
             MisfinStatus::FingerprintChanged.category(),
             StatusCategory::AuthenticationFailure
         );
-        assert_eq!(
-            MisfinStatus::Other(15).category(),
-            StatusCategory::Reserved
-        );
+        assert_eq!(MisfinStatus::Other(15).category(), StatusCategory::Reserved);
     }
 
     #[test]

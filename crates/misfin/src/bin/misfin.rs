@@ -6,8 +6,8 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use misfin::{
-    MailboxStore, MisfinAddress, MisfinIdentitySpec, MisfinServer, MisfinServerConfig,
-    SendOptions, ServedMailbox, ensure_identity_with_root, identity_material_with_root, send,
+    MailboxStore, MisfinAddress, MisfinIdentitySpec, MisfinServer, MisfinServerConfig, SendOptions,
+    ServedMailbox, ensure_identity_with_root, identity_material_with_root, send,
 };
 
 const USAGE: &str = "misfin — the Misfin mail protocol (spec: github.com/JCLemme/misfin)
@@ -129,8 +129,7 @@ fn run(args: Vec<String>) -> Result<(), String> {
         "send" => {
             let Some((recipient, message_parts)) = flags.positional.split_first() else {
                 return Err(
-                    "usage: misfin send <recipient@host> <message...> --from <mailbox@host>"
-                        .into(),
+                    "usage: misfin send <recipient@host> <message...> --from <mailbox@host>".into(),
                 );
             };
             if message_parts.is_empty() {
@@ -203,7 +202,10 @@ fn run(args: Vec<String>) -> Result<(), String> {
             let server = MisfinServer::new(config, store).map_err(|error| error.to_string())?;
 
             tokio_block_on(async move {
-                let bound = server.bind(listen).await.map_err(|error| error.to_string())?;
+                let bound = server
+                    .bind(listen)
+                    .await
+                    .map_err(|error| error.to_string())?;
                 let addr = bound.local_addr().map_err(|error| error.to_string())?;
                 eprintln!("misfin: serving on {addr} (ctrl-c to stop)");
                 bound
@@ -247,7 +249,9 @@ fn mailbox_host(mailbox: &ServedMailbox) -> &str {
     &mailbox.address.host
 }
 
-fn tokio_block_on<T>(future: impl std::future::Future<Output = Result<T, impl ToString>>) -> Result<T, String> {
+fn tokio_block_on<T>(
+    future: impl std::future::Future<Output = Result<T, impl ToString>>,
+) -> Result<T, String> {
     tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()

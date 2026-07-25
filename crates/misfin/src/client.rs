@@ -108,7 +108,10 @@ impl std::fmt::Display for SendError {
                 "misfin request would be {request_bytes} bytes (max {max}); split the message"
             ),
             Self::MessageContainsCarriageReturn => {
-                write!(formatter, "misfin messages must not contain carriage returns")
+                write!(
+                    formatter,
+                    "misfin messages must not contain carriage returns"
+                )
             }
             Self::InvalidHost(host) => write!(formatter, "invalid misfin host '{host}'"),
             Self::FingerprintMismatch { expected, found } => write!(
@@ -133,10 +136,7 @@ pub fn build_request(recipient: &MisfinAddress, message: &str) -> Result<String,
     if message.contains('\r') {
         return Err(SendError::MessageContainsCarriageReturn);
     }
-    let request = format!(
-        "misfin://{} {message}\r\n",
-        recipient.as_addr_spec()
-    );
+    let request = format!("misfin://{} {message}\r\n", recipient.as_addr_spec());
     if request.len() > MAX_REQUEST_BYTES {
         return Err(SendError::MessageTooLong {
             request_bytes: request.len(),
@@ -215,14 +215,14 @@ pub async fn send(
         .map(|cert| sha256_hex(cert.as_ref()))
         .ok_or_else(|| SendError::Tls("server presented no certificate".to_string()))?;
 
-    if let Some(expected) = &options.expected_fingerprint {
-        if normalize_fingerprint(expected) != server_fingerprint {
-            let _ = tls.shutdown().await;
-            return Err(SendError::FingerprintMismatch {
-                expected: normalize_fingerprint(expected),
-                found: server_fingerprint,
-            });
-        }
+    if let Some(expected) = &options.expected_fingerprint
+        && normalize_fingerprint(expected) != server_fingerprint
+    {
+        let _ = tls.shutdown().await;
+        return Err(SendError::FingerprintMismatch {
+            expected: normalize_fingerprint(expected),
+            found: server_fingerprint,
+        });
     }
 
     tokio::time::timeout(timeout, tls.write_all(request.as_bytes()))
@@ -231,8 +231,7 @@ pub async fn send(
         .map_err(|error| SendError::Io(error.to_string()))?;
 
     let line = read_response_line(&mut tls, timeout).await?;
-    let (status, meta) =
-        parse_response_line(&line).map_err(SendError::BadResponse)?;
+    let (status, meta) = parse_response_line(&line).map_err(SendError::BadResponse)?;
 
     // Spec §3: send close-notify so the peer can distinguish a complete
     // transaction from a truncated one.

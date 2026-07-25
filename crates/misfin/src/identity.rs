@@ -309,8 +309,8 @@ mod tests {
         let tempdir = TempDir::new().expect("temp dir should be created");
         let spec = spec("worker@hive.local");
 
-        let status = ensure_identity_with_root(&spec, tempdir.path())
-            .expect("identity should be created");
+        let status =
+            ensure_identity_with_root(&spec, tempdir.path()).expect("identity should be created");
 
         assert!(status.exists);
         assert_eq!(status.address, "worker@hive.local");

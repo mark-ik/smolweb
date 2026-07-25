@@ -613,7 +613,7 @@ mod tests {
     fn random_seq_stays_in_range() {
         for _ in 0..100 {
             let seq = random_seq(1000);
-            assert!(seq >= MIN_SEQ && seq <= MAX_SEQ - 1000);
+            assert!((MIN_SEQ..=MAX_SEQ - 1000).contains(&seq));
         }
     }
 }

@@ -17,23 +17,23 @@ pub fn parse_gemmail(text: &str) -> MisfinGemmail {
     for line in text.lines() {
         let line = line.trim_end_matches('\r');
 
-        if sender.is_none() {
-            if let Some(parsed_sender) = parse_sender_line(line) {
-                sender = Some(parsed_sender);
-                continue;
-            }
+        if sender.is_none()
+            && let Some(parsed_sender) = parse_sender_line(line)
+        {
+            sender = Some(parsed_sender);
+            continue;
         }
-        if recipients.is_none() {
-            if let Some(parsed_recipients) = parse_recipients_line(line) {
-                recipients = Some(parsed_recipients);
-                continue;
-            }
+        if recipients.is_none()
+            && let Some(parsed_recipients) = parse_recipients_line(line)
+        {
+            recipients = Some(parsed_recipients);
+            continue;
         }
-        if timestamp.is_none() {
-            if let Some(parsed_timestamp) = parse_timestamp_line(line) {
-                timestamp = Some(parsed_timestamp);
-                continue;
-            }
+        if timestamp.is_none()
+            && let Some(parsed_timestamp) = parse_timestamp_line(line)
+        {
+            timestamp = Some(parsed_timestamp);
+            continue;
         }
 
         body_lines.push(line.to_string());
@@ -171,10 +171,7 @@ mod tests {
     #[test]
     fn only_the_first_metadata_line_of_each_type_is_parsed() {
         let gemmail = parse_gemmail("< a@one.test First\n< b@two.test Second\nbody");
-        assert_eq!(
-            gemmail.sender.unwrap().address.as_addr_spec(),
-            "a@one.test"
-        );
+        assert_eq!(gemmail.sender.unwrap().address.as_addr_spec(), "a@one.test");
         assert_eq!(gemmail.body, "< b@two.test Second\nbody");
     }
 

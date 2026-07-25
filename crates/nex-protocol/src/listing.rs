@@ -26,13 +26,13 @@ pub fn parse_listing(text: &str) -> Vec<ListingLine> {
                                 url: url.to_string(),
                                 label: (!label.is_empty()).then(|| label.to_string()),
                             }
-                        },
+                        }
                         None => ListingLine::Link {
                             url: rest.to_string(),
                             label: None,
                         },
                     }
-                },
+                }
                 _ => ListingLine::Text(line.to_string()),
             }
         })

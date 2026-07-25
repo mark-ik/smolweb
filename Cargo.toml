@@ -6,3 +6,14 @@ members = [
     "crates/nex-protocol",
     "crates/guppy-protocol",
 ]
+
+[workspace.package]
+# Minimum supported Rust version. These crates are meant to be depended on by
+# people outside this workspace, so the number is a promise and CI holds it:
+# the `msrv` job builds and tests the whole workspace on exactly this toolchain.
+#
+# 1.88 is measured, not chosen. Below it the build fails on two independent
+# counts: `time` (through misfin's TLS lane) declares 1.88 itself, and the
+# protocol crates use let-chains, stabilized in 1.88. 1.85, the edition-2024
+# floor, was tried first and fails on all four crates.
+rust-version = "1.88"

@@ -39,9 +39,7 @@ pub fn parse_certificate_identity(
             if mailbox.is_none() {
                 mailbox = attribute.as_str().ok().map(str::to_string);
             }
-        } else if *attribute.attr_type() == oid_registry::OID_X509_COMMON_NAME
-            && blurb.is_none()
-        {
+        } else if *attribute.attr_type() == oid_registry::OID_X509_COMMON_NAME && blurb.is_none() {
             blurb = attribute.as_str().ok().map(str::to_string);
         }
     }
@@ -90,9 +88,9 @@ mod tests {
 
     #[test]
     fn our_own_certificates_round_trip_their_identity() {
-        let material =
-            deterministic_identity(&[5u8; 32], &spec("ana@other.test", "Ana")).unwrap();
-        let identity = parse_certificate_identity(&material.certificate_der, 1_800_000_000).unwrap();
+        let material = deterministic_identity(&[5u8; 32], &spec("ana@other.test", "Ana")).unwrap();
+        let identity =
+            parse_certificate_identity(&material.certificate_der, 1_800_000_000).unwrap();
         assert_eq!(identity.mailbox.as_deref(), Some("ana"));
         assert_eq!(identity.hosts, vec!["other.test".to_string()]);
         assert_eq!(identity.blurb.as_deref(), Some("Ana"));
@@ -106,7 +104,8 @@ mod tests {
     fn expiry_is_reported_against_now() {
         let material =
             identity_with_validity_years(&spec("old@stale.test", "Old"), 2001, 2003).unwrap();
-        let identity = parse_certificate_identity(&material.certificate_der, 1_800_000_000).unwrap();
+        let identity =
+            parse_certificate_identity(&material.certificate_der, 1_800_000_000).unwrap();
         assert!(identity.expired);
     }
 

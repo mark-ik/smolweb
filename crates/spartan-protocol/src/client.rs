@@ -68,7 +68,7 @@ impl std::fmt::Display for ClientError {
             Self::Protocol(message) => write!(formatter, "spartan protocol error: {message}"),
             Self::BodyTooLarge { max } => {
                 write!(formatter, "spartan response body exceeds {max} bytes")
-            },
+            }
         }
     }
 }
@@ -101,9 +101,13 @@ pub async fn submit(
     request(&host, port, &path, data, options).await
 }
 
-/// Map a `spartan://` URL to (request-line host, port, %-encoded path,
-/// %-decoded query data) per spec §5. The `url` crate handles IDN → punycode.
-fn split_url(input: &str) -> Result<(String, u16, String, Option<Vec<u8>>), ClientError> {
+/// The parts of a `spartan://` URL a request line is built from: host, port,
+/// %-encoded path, and %-decoded query data.
+type UrlParts = (String, u16, String, Option<Vec<u8>>);
+
+/// Map a `spartan://` URL to its request parts per spec §5. The `url` crate
+/// handles IDN → punycode.
+fn split_url(input: &str) -> Result<UrlParts, ClientError> {
     let url = Url::parse(input).map_err(|error| ClientError::BadUrl(error.to_string()))?;
     if url.scheme() != "spartan" {
         return Err(ClientError::BadUrl(format!(

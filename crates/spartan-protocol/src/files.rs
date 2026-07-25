@@ -31,7 +31,7 @@ impl FileHandler {
                 segment => resolved.push(segment),
             }
         }
-        if decoded.ends_with('/') || decoded == "" {
+        if decoded.ends_with('/') || decoded.is_empty() {
             resolved.push("index.gmi");
         }
         Some(resolved)
@@ -88,7 +88,7 @@ impl Handler for FileHandler {
                 SpartanResponse::ClientError {
                     message: format!("File {} not found.", request.path),
                 }
-            },
+            }
             Err(_) => SpartanResponse::ServerError {
                 message: "Could not read file.".to_string(),
             },

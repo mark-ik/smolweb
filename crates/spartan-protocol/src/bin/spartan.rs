@@ -28,7 +28,7 @@ fn main() -> ExitCode {
         Err(message) => {
             eprintln!("{message}");
             ExitCode::FAILURE
-        },
+        }
     }
 }
 
@@ -57,7 +57,7 @@ fn run(args: Vec<String>) -> Result<(), String> {
             };
             let response = block_on(fetch(url, &FetchOptions::default()))?;
             print_response(response)
-        },
+        }
         "submit" => {
             let Some((url, data_parts)) = positional.split_first() else {
                 return Err("usage: spartan submit <spartan://url> <data...>".into());
@@ -68,7 +68,7 @@ fn run(args: Vec<String>) -> Result<(), String> {
             let data = data_parts.join(" ");
             let response = block_on(submit(url, data.as_bytes(), &FetchOptions::default()))?;
             print_response(response)
-        },
+        }
         "serve" => {
             let root = root.ok_or("spartan serve: --root DIR is required")?;
             let listen: SocketAddr = listen
@@ -95,11 +95,11 @@ fn run(args: Vec<String>) -> Result<(), String> {
                 .await
                 .map_err(|error| error.to_string())
             })
-        },
+        }
         "--help" | "-h" | "help" => {
             println!("{USAGE}");
             Ok(())
-        },
+        }
         other => Err(format!("Unknown command '{other}'.\n\n{USAGE}")),
     }
 }
@@ -112,11 +112,11 @@ fn print_response(response: spartan_protocol::Response) -> Result<(), String> {
             std::io::stdout()
                 .write_all(&response.body)
                 .map_err(|error| error.to_string())
-        },
+        }
         status => {
             println!("{status} {}", response.meta);
             Err(format!("request answered: {status}"))
-        },
+        }
     }
 }
 
