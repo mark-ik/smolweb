@@ -93,5 +93,5 @@ acted on — per the best-practices document, resending is the user's decision.
 MIT, matching how the protocol's own repository licenses its reference
 implementation (the protocol itself is declared public domain there, and the
 spec documents are CC-BY-SA 4.0). Originally extracted from the
-[Mere](https://github.com/mark-ik/mere) browser workspace, which now consumes
+[Mere](https://github.com/merely-made/mere) browser workspace, which now consumes
 this crate.

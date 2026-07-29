@@ -1,6 +1,6 @@
 # spartan-protocol
 
-> **Home:** [`mark-ik/genet`](https://github.com/mark-ik/genet), at
+> **Home:** [`merely-made/genet`](https://github.com/merely-made/genet), at
 > `components/errand/protocols/spartan-protocol` (adopted 2026-07). The former standalone repository is archived
 > and links here.
 

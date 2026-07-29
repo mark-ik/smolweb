@@ -27,7 +27,7 @@ The same offer stands for the others.
 This workspace is the wire layer only. The client integration that composes
 these protocols (`errand`) and the engine that renders their capsules as
 documents (`nematic`) are components of
-[genet](https://github.com/mark-ik/genet), which consumes these crates from
+[genet](https://github.com/merely-made/genet), which consumes these crates from
 crates.io like any other dependency.
 
 ## History
@@ -36,5 +36,5 @@ crates.io like any other dependency.
 protocol crates were published from standalone repositories in July 2026,
 adopted into genet on 2026-07-10, and moved here on 2026-07-23; their
 commit history for that period lives in
-[genet](https://github.com/mark-ik/genet) under
+[genet](https://github.com/merely-made/genet) under
 `components/errand/protocols/`.
