@@ -11,11 +11,15 @@ protocol's author.
 | [`spartan-protocol`](crates/spartan-protocol) | Spartan (`spartan://`): plaintext smolweb with uploads via the `=:` prompt. |
 | [`nex-protocol`](crates/nex-protocol) | Nex (`nex://`): the minimal one — plaintext TCP, no TLS, no status codes. |
 | [`guppy-protocol`](crates/guppy-protocol) | Guppy v0.4.4 (`guppy://`): smolweb over UDP, with chunking, acks, and retransmission. |
-| [`gopher-protocol`](crates/gopher-protocol) | Gopher (`gopher://`): the elder one. RFC 1436 client and menu parser, RFC 4266 URLs. |
+| [`gopher-protocol`](crates/gopher-protocol) | Gopher (`gopher://`) and Gopher+: the elder one. RFC 1436 menus, RFC 4266 URLs, Gopher+ attributes, views, and ASK forms. |
+| [`finger-protocol`](crates/finger-protocol) | Finger (`finger://`, RFC 1288) and WebFinger (RFC 7033): the oldest way to ask who someone is, and the one the fediverse uses. |
 
-All five are MIT licensed and usable without anything else in this workspace.
-The first four are published to crates.io; `gopher-protocol` is not published
-yet.
+All six are MIT licensed and usable without anything else in this workspace.
+
+Where a protocol has a successor, it lives in the same crate rather than a new
+one, because the successors are supersets: a plain RFC 1436 menu is simply a
+Gopher+ menu without markers. WebFinger is the exception that proves it, being
+a separate protocol under the same question, so it sits behind its own feature.
 
 Where a crate carries both a wire protocol and the document grammar that
 protocol defines, both live here, because both are the spec. Grammars are

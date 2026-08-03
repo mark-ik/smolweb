@@ -1,0 +1,36 @@
+[package]
+name = "finger-protocol"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+license = "MIT"
+repository = "https://github.com/merely-made/smolweb"
+description = "An implementation of the Finger protocol (finger://, RFC 1288) and its WebFinger successor (RFC 7033): async finger client, plus WebFinger request construction and JRD parsing. The oldest way to ask who someone is."
+keywords = ["finger", "webfinger", "smolweb", "protocol", "jrd"]
+categories = ["network-programming"]
+readme = "README.md"
+
+[features]
+# Both halves are on by default: the crate exists to cover finger and its
+# successor. A consumer that wants only the classic wire protocol (errand, for
+# one) takes `default-features = false, features = ["client"]` and pulls no
+# JSON stack.
+default = ["client", "webfinger"]
+client = ["dep:tokio", "dep:url"]
+webfinger = ["dep:serde", "dep:serde_json", "dep:percent-encoding"]
+
+[dependencies]
+url = { version = "2.5", optional = true }
+tokio = { version = "1", default-features = false, features = [
+    "net",
+    "io-util",
+], optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+serde_json = { version = "1", optional = true }
+percent-encoding = { version = "2.3", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = [
+    "macros",
+    "rt",
+] }
