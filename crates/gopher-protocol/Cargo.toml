@@ -5,8 +5,8 @@ edition = "2024"
 rust-version.workspace = true
 license = "MIT"
 repository = "https://github.com/merely-made/smolweb"
-description = "An implementation of the Gopher protocol (gopher://): async client and RFC 1436 menu parser with RFC 4266 URL synthesis. The elder smolweb protocol — plaintext TCP, typed items, no status codes."
-keywords = ["gopher", "smolweb", "protocol", "gemini", "nex"]
+description = "An implementation of the Gopher protocol (gopher://) and its Gopher+ successor: async client, RFC 1436 menu parser with RFC 4266 URLs, and Gopher+ attribute blocks, alternate views, and ASK forms. The parser half has no dependencies."
+keywords = ["gopher", "gopher-plus", "smolweb", "protocol", "gemini"]
 categories = ["network-programming"]
 readme = "README.md"
 

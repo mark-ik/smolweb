@@ -1,17 +1,29 @@
 # gopher-protocol
 
 An implementation of [Gopher](https://datatracker.ietf.org/doc/html/rfc1436)
-(`gopher://`, port 70) in Rust: an async client and an RFC 1436 menu parser
-with RFC 4266 URL synthesis.
+(`gopher://`, port 70) and its [Gopher+](https://github.com/gopher-protocol/gopher-plus)
+successor in Rust: an async client, an RFC 1436 menu parser with RFC 4266 URL
+synthesis, and the Gopher+ attribute, view, and form model.
 
 This is not the reference implementation of Gopher, and it does not speak for
 the protocol's community.
 
+## Gopher+
+
+Gopher+ (1993) is an upward-compatible superset, so it is not a separate
+protocol here: a plain RFC 1436 menu just has no Gopher+ markers on its items.
+What it adds is a response header carrying a real length, attribute blocks
+(`+INFO`, `+ADMIN`, `+VIEWS`) that describe an item without fetching it,
+alternate representations, and `+ASK` forms for interactive queries.
+
+Gopher-II (the [later draft](https://datatracker.ietf.org/doc/html/draft-matavka-gopher-ii-02))
+is not implemented.
+
 ## Two halves, separately usable
 
-The menu parser has no dependencies and is always compiled. A consumer that
-only renders gophermaps takes the crate without the client and pulls no async
-runtime:
+The parsers have no dependencies and are always compiled, Gopher+ included.
+A consumer that only renders gophermaps takes the crate without the client and
+pulls no async runtime:
 
 ```toml
 gopher-protocol = { version = "0.1", default-features = false }

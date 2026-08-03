@@ -20,9 +20,11 @@
 //! # }
 //! ```
 
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
 use url::Url;
+
+use crate::plus::{AttributeBlock, MalformedHeader, PlusHeader, parse_attributes, parse_header};
 
 /// Gopher's well-known port.
 pub const DEFAULT_PORT: u16 = 70;
@@ -38,6 +40,17 @@ pub enum ClientError {
     Connect(String),
     /// A read or write failed mid-exchange.
     Io(String),
+    /// A Gopher+ reply did not begin with a well-formed header. Only Gopher+
+    /// transactions can produce this; plain RFC 1436 replies have no header.
+    BadPlusHeader(String),
+    /// A Gopher+ server answered `--1`. The string is the error text it sent.
+    PlusError(String),
+}
+
+impl From<MalformedHeader> for ClientError {
+    fn from(error: MalformedHeader) -> Self {
+        Self::BadPlusHeader(error.0)
+    }
 }
 
 impl std::fmt::Display for ClientError {
@@ -46,6 +59,8 @@ impl std::fmt::Display for ClientError {
             Self::BadUrl(m) => write!(f, "bad url: {m}"),
             Self::Connect(m) => write!(f, "connect: {m}"),
             Self::Io(m) => write!(f, "io: {m}"),
+            Self::BadPlusHeader(m) => write!(f, "malformed gopher+ header: {m}"),
+            Self::PlusError(m) => write!(f, "gopher+ error: {m}"),
         }
     }
 }
@@ -137,6 +152,148 @@ pub fn mime_for_item_type(item_type: char) -> &'static str {
     }
 }
 
+// ── Gopher+ ────────────────────────────────────────────────────────────────
+
+/// What a Gopher+ retrieval asks for.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum PlusRequest {
+    /// `+`: the item itself. The optional representation names one of the
+    /// alternates the item's `+VIEWS` block advertises.
+    Item(Option<String>),
+    /// `!`: this item's attribute blocks.
+    Attributes,
+    /// `$`: the attribute blocks of every item in a directory.
+    DirectoryAttributes,
+}
+
+impl PlusRequest {
+    /// The token appended after the request's second TAB.
+    fn token(&self) -> String {
+        match self {
+            Self::Item(None) => "+".to_string(),
+            Self::Item(Some(view)) => format!("+{view}"),
+            Self::Attributes => "!".to_string(),
+            Self::DirectoryAttributes => "$".to_string(),
+        }
+    }
+}
+
+/// A Gopher+ reply: the header the server declared, and the body with any
+/// period terminator removed.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PlusReply {
+    pub header: PlusHeader,
+    pub body: Vec<u8>,
+}
+
+/// Run a Gopher+ transaction against a `gopher://` URL.
+///
+/// A Gopher+ request is the RFC 1436 request with a second TAB and a token:
+/// `selector <TAB> search <TAB> token`. The search field is present but empty
+/// for a non-search item, which is why the spec's own examples show two tabs.
+pub async fn fetch_plus(url: &str, request: PlusRequest) -> Result<PlusReply, ClientError> {
+    let url = Url::parse(url).map_err(|e| ClientError::BadUrl(e.to_string()))?;
+    let host = url
+        .host_str()
+        .ok_or_else(|| ClientError::BadUrl("gopher URL has no host".into()))?;
+    let port = url.port().unwrap_or(DEFAULT_PORT);
+    let (_, selector) = split_path(&url);
+    let search = url.query().unwrap_or("");
+
+    let line = format!("{selector}\t{search}\t{}\r\n", request.token());
+    let (header, body) = plus_exchange(host, port, line.as_bytes()).await?;
+
+    if header == PlusHeader::Error {
+        return Err(ClientError::PlusError(
+            String::from_utf8_lossy(&body).trim().to_string(),
+        ));
+    }
+    Ok(PlusReply { header, body })
+}
+
+/// Fetch and parse an item's Gopher+ attribute blocks (`!`).
+pub async fn fetch_attributes(url: &str) -> Result<Vec<AttributeBlock>, ClientError> {
+    let reply = fetch_plus(url, PlusRequest::Attributes).await?;
+    Ok(parse_attributes(&String::from_utf8_lossy(&reply.body)))
+}
+
+/// Fetch and parse the attribute blocks of every item in a directory (`$`).
+pub async fn fetch_directory_attributes(url: &str) -> Result<Vec<AttributeBlock>, ClientError> {
+    let reply = fetch_plus(url, PlusRequest::DirectoryAttributes).await?;
+    Ok(parse_attributes(&String::from_utf8_lossy(&reply.body)))
+}
+
+/// Send a Gopher+ request and read the reply according to its header, rather
+/// than always reading to EOF: a counted body stops at its count.
+async fn plus_exchange(
+    host: &str,
+    port: u16,
+    request: &[u8],
+) -> Result<(PlusHeader, Vec<u8>), ClientError> {
+    let mut stream = TcpStream::connect((host, port))
+        .await
+        .map_err(|e| ClientError::Connect(format!("tcp {host}:{port}: {e}")))?;
+    stream
+        .write_all(request)
+        .await
+        .map_err(|e| ClientError::Io(e.to_string()))?;
+
+    let mut reader = BufReader::new(stream);
+    let mut header_line = String::new();
+    reader
+        .read_line(&mut header_line)
+        .await
+        .map_err(|e| ClientError::Io(e.to_string()))?;
+    if header_line.is_empty() {
+        return Err(ClientError::BadPlusHeader(
+            "the server closed without a header".into(),
+        ));
+    }
+    let header = parse_header(&header_line)?;
+
+    let mut body = Vec::new();
+    match header {
+        // `take` rather than a pre-sized allocation: the count comes from the
+        // server and a hostile one should not be able to ask for a huge Vec.
+        PlusHeader::Length(count) => {
+            reader
+                .take(count)
+                .read_to_end(&mut body)
+                .await
+                .map_err(|e| ClientError::Io(e.to_string()))?;
+        },
+        _ => {
+            reader
+                .read_to_end(&mut body)
+                .await
+                .map_err(|e| ClientError::Io(e.to_string()))?;
+        },
+    }
+
+    if matches!(header, PlusHeader::PeriodTerminated | PlusHeader::Error) {
+        body = strip_period_terminator(body);
+    }
+    Ok((header, body))
+}
+
+/// Remove a trailing `.` line. The newline before it belongs to the last data
+/// line, so only the terminator line itself goes.
+fn strip_period_terminator(mut body: Vec<u8>) -> Vec<u8> {
+    for terminator in [
+        b"\r\n.\r\n".as_slice(),
+        b"\n.\n".as_slice(),
+        b"\r\n.".as_slice(),
+        b"\n.".as_slice(),
+    ] {
+        if body.ends_with(terminator) {
+            let keep = if terminator.starts_with(b"\r\n") { 2 } else { 1 };
+            body.truncate(body.len() - terminator.len() + keep);
+            return body;
+        }
+    }
+    body
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -171,5 +328,36 @@ mod tests {
     async fn a_url_without_a_host_is_refused_before_connecting() {
         let error = fetch("gopher:///0/x").await.unwrap_err();
         assert!(matches!(error, ClientError::BadUrl(_)), "got {error:?}");
+    }
+
+    #[test]
+    fn plus_tokens_match_the_spec() {
+        assert_eq!(PlusRequest::Item(None).token(), "+");
+        assert_eq!(
+            PlusRequest::Item(Some("text/plain".into())).token(),
+            "+text/plain"
+        );
+        assert_eq!(PlusRequest::Attributes.token(), "!");
+        assert_eq!(PlusRequest::DirectoryAttributes.token(), "$");
+    }
+
+    #[test]
+    fn the_period_terminator_goes_but_the_last_newline_stays() {
+        assert_eq!(
+            strip_period_terminator(b"one\r\ntwo\r\n.\r\n".to_vec()),
+            b"one\r\ntwo\r\n".to_vec()
+        );
+        assert_eq!(
+            strip_period_terminator(b"one\ntwo\n.\n".to_vec()),
+            b"one\ntwo\n".to_vec()
+        );
+    }
+
+    #[test]
+    fn a_body_that_merely_ends_in_a_period_is_left_alone() {
+        assert_eq!(
+            strip_period_terminator(b"see fig. 1.".to_vec()),
+            b"see fig. 1.".to_vec()
+        );
     }
 }

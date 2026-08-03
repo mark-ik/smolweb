@@ -41,6 +41,33 @@ pub enum GopherKind {
     Other(char),
 }
 
+/// The Gopher+ marker carried in an item line's fifth field.
+///
+/// RFC 1436 menus have four tab-separated fields and stop at the port. Gopher+
+/// servers append a fifth, which RFC 1436 clients are required to ignore. Its
+/// presence is how a client learns an item has attributes worth asking for.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GopherPlus {
+    /// `+`: the item has Gopher+ attribute blocks (`+INFO`, `+VIEWS`, …).
+    Supported,
+    /// `?`: the item is an interactive query carrying an `+ASK` form, which a
+    /// client must fill in before retrieval.
+    Form,
+}
+
+impl GopherPlus {
+    /// Classify a fifth field. Anything other than `+` or `?` is `None`: the
+    /// spec calls this position "extra stuff", so an unknown value is not an
+    /// error, just not a marker this client acts on.
+    fn from_field(field: &str) -> Option<Self> {
+        match field.trim() {
+            "+" => Some(Self::Supported),
+            "?" => Some(Self::Form),
+            _ => None,
+        }
+    }
+}
+
 /// One parsed gopher menu line.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GopherItem {
@@ -53,6 +80,9 @@ pub struct GopherItem {
     /// [`Info`]: GopherKind::Info
     /// [`Error`]: GopherKind::Error
     pub url: Option<String>,
+    /// The Gopher+ marker from the fifth field, when the server sent one.
+    /// `None` for a plain RFC 1436 menu.
+    pub plus: Option<GopherPlus>,
 }
 
 /// Parse a gopher menu body into items, in source order. Stops at the RFC 1436
@@ -79,22 +109,28 @@ fn parse_line(line: &str) -> Option<GopherItem> {
     let type_char = chars.next()?;
     let rest = chars.as_str();
 
-    let mut parts = rest.splitn(4, '\t');
+    // Five, not four: a Gopher+ server appends a marker after the port, and
+    // splitting into four would leave it stuck to the port field (turning
+    // `70` into `70\t+` and corrupting every synthesised URL).
+    let mut parts = rest.splitn(5, '\t');
     let display = parts.next()?.to_string();
     let selector = parts.next().unwrap_or("");
     let host = parts.next().unwrap_or("");
     let port = parts.next().unwrap_or("70");
+    let plus = parts.next().and_then(GopherPlus::from_field);
 
     match type_char {
         'i' => Some(GopherItem {
             kind: GopherKind::Info,
             display,
             url: None,
+            plus,
         }),
         '3' => Some(GopherItem {
             kind: GopherKind::Error,
             display,
             url: None,
+            plus,
         }),
         'h' => {
             // URL items: selector is typically "URL:https://…". Strip the prefix;
@@ -107,6 +143,7 @@ fn parse_line(line: &str) -> Option<GopherItem> {
                 kind: GopherKind::Url,
                 display,
                 url: Some(url.to_string()),
+                plus,
             })
         },
         _ => {
@@ -118,6 +155,7 @@ fn parse_line(line: &str) -> Option<GopherItem> {
                 kind: kind_of(type_char),
                 display,
                 url: Some(url),
+                plus,
             })
         },
     }
@@ -171,6 +209,7 @@ mod tests {
                 kind: GopherKind::Text,
                 display: "Welcome text".into(),
                 url: Some("gopher://example.test/0/welcome.txt".into()),
+                plus: None,
             }]
         );
     }
@@ -210,7 +249,8 @@ mod tests {
             GopherItem {
                 kind: GopherKind::Info,
                 display: "hello".into(),
-                url: None
+                url: None,
+                plus: None
             }
         );
         assert_eq!(
@@ -218,7 +258,8 @@ mod tests {
             GopherItem {
                 kind: GopherKind::Error,
                 display: "boom".into(),
-                url: None
+                url: None,
+                plus: None
             }
         );
     }
@@ -237,6 +278,43 @@ mod tests {
     #[test]
     fn resource_with_missing_host_is_skipped() {
         assert!(parse("1Bad item\t/sel\t\t70\r\n").is_empty());
+    }
+
+    #[test]
+    fn a_gopher_plus_marker_is_read_from_the_fifth_field() {
+        let items = parse("1Archive\t/arc\texample.test\t70\t+\r\n");
+        assert_eq!(items[0].plus, Some(GopherPlus::Supported));
+
+        let items = parse("7Search\t/find\texample.test\t70\t?\r\n");
+        assert_eq!(items[0].plus, Some(GopherPlus::Form));
+        assert_eq!(items[0].kind, GopherKind::Search);
+    }
+
+    #[test]
+    fn a_plus_field_does_not_leak_into_the_port() {
+        // Splitting the line into four fields leaves the marker glued to the
+        // port, which then reads as non-default and corrupts the URL.
+        let items = parse("1Archive\t/arc\texample.test\t70\t+\r\n");
+        assert_eq!(items[0].url.as_deref(), Some("gopher://example.test/1/arc"));
+
+        let items = parse("1Archive\t/arc\texample.test\t7070\t+\r\n");
+        assert_eq!(
+            items[0].url.as_deref(),
+            Some("gopher://example.test:7070/1/arc")
+        );
+    }
+
+    #[test]
+    fn an_unrecognised_fifth_field_is_not_a_marker() {
+        let items = parse("1Thing\t/t\texample.test\t70\tsomething else\r\n");
+        assert_eq!(items[0].plus, None);
+        assert_eq!(items[0].url.as_deref(), Some("gopher://example.test/1/t"));
+    }
+
+    #[test]
+    fn a_plain_rfc1436_menu_has_no_markers() {
+        let items = parse(&line('0', "Plain", "/p", "example.test", "70"));
+        assert_eq!(items[0].plus, None);
     }
 
     #[test]

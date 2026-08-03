@@ -1,7 +1,8 @@
 //! # gopher-protocol
 //!
 //! An implementation of [Gopher](https://datatracker.ietf.org/doc/html/rfc1436)
-//! (`gopher://`, port 70): an async client and a menu parser.
+//! (`gopher://`, port 70) and its **Gopher+** successor: an async client, a
+//! menu parser, and the Gopher+ attribute, view, and form model.
 //!
 //! Gopher is the elder smolweb protocol. A request is a selector and a CRLF; a
 //! reply is a body with no status line and no MIME type. The item-type
@@ -9,12 +10,22 @@
 //! which is why this crate reports a best-effort MIME rather than inventing a
 //! status the protocol does not have.
 //!
+//! ## Gopher+
+//!
+//! [Gopher+](https://github.com/gopher-protocol/gopher-plus) (1993) is an
+//! upward-compatible superset, and this crate treats it as one rather than as a
+//! separate protocol: a plain RFC 1436 menu simply has no
+//! [`GopherPlus`](menu::GopherPlus) markers on its items. Gopher+ adds a
+//! response header carrying a real length, attribute blocks describing an item
+//! without fetching it, alternate representations, and `+ASK` forms. See
+//! [`plus`], and [`client::fetch_plus`] to run a Gopher+ transaction.
+//!
 //! ## Two halves, separately usable
 //!
-//! [`menu`] parses RFC 1436 menus into typed items with RFC 4266 URLs. It has
-//! no dependencies and is always compiled, so a consumer that only renders
-//! gophermaps can take this crate with `default-features = false` and pull no
-//! async runtime:
+//! [`menu`] parses RFC 1436 menus into typed items with RFC 4266 URLs, and
+//! [`plus`] parses everything Gopher+ adds. Both have no dependencies and are
+//! always compiled, so a consumer that only renders gophermaps can take this
+//! crate with `default-features = false` and pull no async runtime:
 //!
 //! ```toml
 //! gopher-protocol = { version = "0.1", default-features = false }
@@ -45,11 +56,16 @@
 #![forbid(unsafe_code)]
 
 pub mod menu;
+pub mod plus;
 
 #[cfg(feature = "client")]
 pub mod client;
 
-pub use menu::{GopherItem, GopherKind, parse as parse_menu};
+pub use menu::{GopherItem, GopherKind, GopherPlus, parse as parse_menu};
+pub use plus::{AskDirective, AttributeBlock, PlusHeader, View};
 
 #[cfg(feature = "client")]
-pub use client::{ClientError, DEFAULT_PORT, Response, fetch, mime_for_item_type};
+pub use client::{
+    ClientError, DEFAULT_PORT, PlusReply, PlusRequest, Response, fetch, fetch_attributes,
+    fetch_directory_attributes, fetch_plus, mime_for_item_type,
+};
