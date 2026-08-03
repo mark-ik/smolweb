@@ -11,9 +11,16 @@ protocol's author.
 | [`spartan-protocol`](crates/spartan-protocol) | Spartan (`spartan://`): plaintext smolweb with uploads via the `=:` prompt. |
 | [`nex-protocol`](crates/nex-protocol) | Nex (`nex://`): the minimal one — plaintext TCP, no TLS, no status codes. |
 | [`guppy-protocol`](crates/guppy-protocol) | Guppy v0.4.4 (`guppy://`): smolweb over UDP, with chunking, acks, and retransmission. |
+| [`gopher-protocol`](crates/gopher-protocol) | Gopher (`gopher://`): the elder one. RFC 1436 client and menu parser, RFC 4266 URLs. |
 
-All four are MIT licensed, published to crates.io, and usable without anything
-else in this workspace.
+All five are MIT licensed and usable without anything else in this workspace.
+The first four are published to crates.io; `gopher-protocol` is not published
+yet.
+
+Where a crate carries both a wire protocol and the document grammar that
+protocol defines, both live here, because both are the spec. Grammars are
+dependency-free and separable: a consumer that only parses can take the crate
+with `default-features = false` and pull no async runtime.
 
 ## Stewardship
 
