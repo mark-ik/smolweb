@@ -5,6 +5,7 @@ members = [
     "crates/spartan-protocol",
     "crates/nex-protocol",
     "crates/guppy-protocol",
+    "crates/gopher-protocol",
 ]
 
 [workspace.package]

@@ -1,0 +1,32 @@
+[package]
+name = "gopher-protocol"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+license = "MIT"
+repository = "https://github.com/merely-made/smolweb"
+description = "An implementation of the Gopher protocol (gopher://): async client and RFC 1436 menu parser with RFC 4266 URL synthesis. The elder smolweb protocol — plaintext TCP, typed items, no status codes."
+keywords = ["gopher", "smolweb", "protocol", "gemini", "nex"]
+categories = ["network-programming"]
+readme = "README.md"
+
+[features]
+# The menu parser is dep-free and always compiled. The client is the only
+# thing that needs tokio + url, so a consumer that merely renders a gophermap
+# (a viewer, a card, a static-site tool) can take this crate with
+# `default-features = false` and pull no async runtime at all.
+default = ["client"]
+client = ["dep:tokio", "dep:url"]
+
+[dependencies]
+url = { version = "2.5", optional = true }
+tokio = { version = "1", default-features = false, features = [
+    "net",
+    "io-util",
+], optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = [
+    "macros",
+    "rt",
+] }
