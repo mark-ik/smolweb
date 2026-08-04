@@ -13,8 +13,9 @@ protocol's author.
 | [`guppy-protocol`](crates/guppy-protocol) | Guppy v0.4.4 (`guppy://`): smolweb over UDP, with chunking, acks, and retransmission. |
 | [`gopher-protocol`](crates/gopher-protocol) | Gopher (`gopher://`) and Gopher+: the elder one. RFC 1436 menus, RFC 4266 URLs, Gopher+ attributes, views, and ASK forms. |
 | [`finger-protocol`](crates/finger-protocol) | Finger (`finger://`, RFC 1288) and WebFinger (RFC 7033): the oldest way to ask who someone is, and the one the fediverse uses. |
+| [`gemini-protocol`](crates/gemini-protocol) | Gemini (`gemini://`), the gemtext grammar, TOFU pinning, and titan (`titan://`) upload. |
 
-All six are MIT licensed, published to crates.io, and usable without anything
+All seven are MIT licensed, published to crates.io, and usable without anything
 else in this workspace.
 
 Where a protocol has a successor, it lives in the same crate rather than a new

@@ -1,0 +1,56 @@
+[package]
+name = "gemini-protocol"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+license = "MIT"
+repository = "https://github.com/merely-made/smolweb"
+description = "An implementation of the Gemini protocol (gemini://) and the formats and companions defined with it: the gemtext document grammar, real trust-on-first-use TLS pinning, and titan:// upload. The gemtext parser has no dependencies, and the protocol runs over any stream."
+keywords = ["gemini", "gemtext", "smolweb", "titan", "protocol"]
+categories = ["network-programming"]
+readme = "README.md"
+
+[features]
+# Three layers, because they have genuinely different dependency costs and
+# genuinely different consumers.
+#
+# - gemtext (always on, no deps): the document grammar. Five other smolweb
+#   protocols serve text/gemini bodies, so this is the piece most consumers
+#   want and the one that should never drag in a TLS stack.
+# - client: the request/response over *any* AsyncRead + AsyncWrite. Gemini
+#   over an already-encrypted carrier (a Reticulum link, say) needs exactly
+#   this and no TLS at all.
+# - tls: TCP + rustls + trust-on-first-use pinning, and titan upload, which
+#   shares gemini's TLS. This is the ordinary internet client.
+default = ["tls"]
+client = ["dep:tokio", "dep:url"]
+tls = ["client", "dep:rustls", "dep:tokio-rustls", "dep:ring"]
+
+[dependencies]
+url = { version = "2.5", optional = true }
+tokio = { version = "1", default-features = false, features = [
+    "net",
+    "io-util",
+], optional = true }
+# TLS for gemini: rustls on the ring provider, with a trust-on-first-use
+# verifier (capsules are conventionally self-signed). aws-lc-rs is left off so
+# the crate builds without a C toolchain.
+rustls = { version = "0.23", default-features = false, features = [
+    "ring",
+    "std",
+    "tls12",
+], optional = true }
+tokio-rustls = { version = "0.26", default-features = false, features = [
+    "ring",
+    "tls12",
+], optional = true }
+# SHA-256 of leaf certificates, for TOFU pinning.
+ring = { version = "0.17", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = [
+    "macros",
+    "rt",
+    "rt-multi-thread",
+    "io-util",
+] }
