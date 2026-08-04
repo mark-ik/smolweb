@@ -60,12 +60,17 @@ pub mod plus;
 
 #[cfg(feature = "client")]
 pub mod client;
+#[cfg(feature = "server")]
+pub mod server;
 
 pub use menu::{GopherItem, GopherKind, GopherPlus, parse as parse_menu};
-pub use plus::{AskDirective, AttributeBlock, PlusHeader, View};
+pub use plus::{AskDirective, AttributeBlock, PlusHeader, PlusRequest, View};
+
+#[cfg(feature = "server")]
+pub use server::{ServerConfig, serve};
 
 #[cfg(feature = "client")]
 pub use client::{
-    ClientError, DEFAULT_PORT, PlusReply, PlusRequest, Response, fetch, fetch_attributes,
+    ClientError, DEFAULT_PORT, PlusReply, Response, fetch, fetch_attributes,
     fetch_directory_attributes, fetch_plus, mime_for_item_type,
 };

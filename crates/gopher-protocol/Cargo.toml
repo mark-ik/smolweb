@@ -17,6 +17,9 @@ readme = "README.md"
 # `default-features = false` and pull no async runtime at all.
 default = ["client"]
 client = ["dep:tokio", "dep:url"]
+# Serving is the same wire protocol read in the other direction, and answers
+# both generations. Off by default: a client must not carry listeners.
+server = ["dep:tokio", "dep:log", "tokio/rt", "tokio/time", "tokio/macros"]
 
 [dependencies]
 url = { version = "2.5", optional = true }
@@ -24,6 +27,7 @@ tokio = { version = "1", default-features = false, features = [
     "net",
     "io-util",
 ], optional = true }
+log = { version = "0.4", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", default-features = false, features = [

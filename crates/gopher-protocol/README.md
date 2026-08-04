@@ -29,7 +29,10 @@ pulls no async runtime:
 gopher-protocol = { version = "0.1", default-features = false }
 ```
 
-The client rides the default `client` feature.
+The client rides the default `client` feature, and a **server** rides the
+off-by-default `server` feature: it reads all three request fields, so one
+handler answers both RFC 1436 and Gopher+ callers, and the Gopher+ length
+header is written for you.
 
 ## Example
 

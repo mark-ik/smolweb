@@ -26,6 +26,11 @@ use url::Url;
 
 use crate::plus::{AttributeBlock, MalformedHeader, PlusHeader, parse_attributes, parse_header};
 
+// Re-exported so `client::PlusRequest` remains a valid path after the type
+// moved to `plus`, where it belongs: a request form is protocol vocabulary,
+// not client machinery, and the server needs it too.
+pub use crate::plus::PlusRequest;
+
 /// Gopher's well-known port.
 pub const DEFAULT_PORT: u16 = 70;
 
@@ -153,30 +158,6 @@ pub fn mime_for_item_type(item_type: char) -> &'static str {
 }
 
 // ── Gopher+ ────────────────────────────────────────────────────────────────
-
-/// What a Gopher+ retrieval asks for.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum PlusRequest {
-    /// `+`: the item itself. The optional representation names one of the
-    /// alternates the item's `+VIEWS` block advertises.
-    Item(Option<String>),
-    /// `!`: this item's attribute blocks.
-    Attributes,
-    /// `$`: the attribute blocks of every item in a directory.
-    DirectoryAttributes,
-}
-
-impl PlusRequest {
-    /// The token appended after the request's second TAB.
-    fn token(&self) -> String {
-        match self {
-            Self::Item(None) => "+".to_string(),
-            Self::Item(Some(view)) => format!("+{view}"),
-            Self::Attributes => "!".to_string(),
-            Self::DirectoryAttributes => "$".to_string(),
-        }
-    }
-}
 
 /// A Gopher+ reply: the header the server declared, and the body with any
 /// period terminator removed.

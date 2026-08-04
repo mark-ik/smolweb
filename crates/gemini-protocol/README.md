@@ -19,6 +19,7 @@ the protocol's community.
 | gemtext | always on | nothing | the document grammar |
 | client | `client` | tokio, url | the exchange over *any* stream |
 | fetch, TOFU, titan | `tls` *(default)* | rustls, ring | the ordinary internet client |
+| serving | `server` *(off)* | rustls, log | accept TLS, answer requests |
 
 The split is not ceremony. **Five other smolweb protocols serve `text/gemini`
 bodies** (spartan, guppy, scroll, misfin, and titan itself), so the grammar is
@@ -52,9 +53,10 @@ does not.
 
 ## Known gap
 
-Client certificates are recognised but not answerable: a `6x` response parses
-correctly and reports itself, but this crate cannot yet present a client
-certificate to satisfy it.
+Client certificates are recognised but not answerable, on **both** sides: a
+`6x` response parses correctly and reports itself, but the client cannot
+present a certificate and the server does not request one. The `6x` path is a
+thing you can say and not a thing you can complete.
 
 ## License
 

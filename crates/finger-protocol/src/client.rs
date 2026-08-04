@@ -16,6 +16,10 @@
 //! # }
 //! ```
 
+// `Query` lives at the crate root: it is protocol vocabulary that the server
+// needs too, so it must not sit behind the `client` feature.
+pub use crate::Query;
+
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use url::Url;
@@ -45,50 +49,6 @@ impl std::fmt::Display for ClientError {
 }
 
 impl std::error::Error for ClientError {}
-
-/// One finger request.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct Query {
-    /// The user to ask about. `None` requests the host's listing.
-    pub user: Option<String>,
-    /// RFC 1288's `/W` switch, asking the server for its longer answer. Servers
-    /// are free to ignore it.
-    pub verbose: bool,
-}
-
-impl Query {
-    /// A query for one user.
-    pub fn user(name: impl Into<String>) -> Self {
-        Self {
-            user: Some(name.into()),
-            verbose: false,
-        }
-    }
-
-    /// The same query with RFC 1288's `/W` switch set.
-    pub fn verbose(mut self) -> Self {
-        self.verbose = true;
-        self
-    }
-
-    /// The wire form: `{W}{S}{U}{C}` in RFC 1288's grammar.
-    ///
-    /// ```
-    /// use finger_protocol::Query;
-    ///
-    /// assert_eq!(Query::user("alice").wire(), "alice\r\n");
-    /// assert_eq!(Query::user("alice").verbose().wire(), "/W alice\r\n");
-    /// assert_eq!(Query::default().wire(), "\r\n");
-    /// ```
-    pub fn wire(&self) -> String {
-        let user = self.user.as_deref().unwrap_or("");
-        match (self.verbose, user.is_empty()) {
-            (true, true) => "/W\r\n".to_string(),
-            (true, false) => format!("/W {user}\r\n"),
-            (false, _) => format!("{user}\r\n"),
-        }
-    }
-}
 
 /// A finger reply: free-form text, as bytes.
 ///

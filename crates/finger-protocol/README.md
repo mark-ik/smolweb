@@ -17,6 +17,7 @@ their communities.
 | | Feature | Pulls |
 |---|---|---|
 | Finger, RFC 1288 | `client` | tokio, url |
+| Finger, serving | `server` *(off by default)* | tokio, log |
 | WebFinger, RFC 7033 | `webfinger` | serde, serde_json, percent-encoding |
 
 Both are on by default. Take `default-features = false` with just one when the

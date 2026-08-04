@@ -15,6 +15,7 @@
 //! | | Module | Feature | Pulls |
 //! |---|---|---|---|
 //! | Finger, RFC 1288 | [`client`] | `client` | tokio, url |
+//! | Finger, serving | [`server`] | `server` *(off)* | tokio, log |
 //! | WebFinger, RFC 7033 | [`webfinger`] | `webfinger` | serde, serde_json, percent-encoding |
 //!
 //! Both are on by default. Take `default-features = false` with just one when
@@ -35,11 +36,59 @@
 #[cfg(feature = "client")]
 pub mod client;
 
+#[cfg(feature = "server")]
+pub mod server;
 #[cfg(feature = "webfinger")]
 pub mod webfinger;
 
 #[cfg(feature = "client")]
-pub use client::{ClientError, DEFAULT_PORT, Query, Response, fetch, query};
+pub use client::{ClientError, DEFAULT_PORT, Response, fetch, query};
 
+#[cfg(feature = "server")]
+pub use server::{ServerConfig, serve};
 #[cfg(feature = "webfinger")]
 pub use webfinger::{Jrd, Link, MEDIA_TYPE, acct, request_url};
+
+/// One finger request.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Query {
+    /// The user to ask about. `None` requests the host's listing.
+    pub user: Option<String>,
+    /// RFC 1288's `/W` switch, asking the server for its longer answer. Servers
+    /// are free to ignore it.
+    pub verbose: bool,
+}
+
+impl Query {
+    /// A query for one user.
+    pub fn user(name: impl Into<String>) -> Self {
+        Self {
+            user: Some(name.into()),
+            verbose: false,
+        }
+    }
+
+    /// The same query with RFC 1288's `/W` switch set.
+    pub fn verbose(mut self) -> Self {
+        self.verbose = true;
+        self
+    }
+
+    /// The wire form: `{W}{S}{U}{C}` in RFC 1288's grammar.
+    ///
+    /// ```
+    /// use finger_protocol::Query;
+    ///
+    /// assert_eq!(Query::user("alice").wire(), "alice\r\n");
+    /// assert_eq!(Query::user("alice").verbose().wire(), "/W alice\r\n");
+    /// assert_eq!(Query::default().wire(), "\r\n");
+    /// ```
+    pub fn wire(&self) -> String {
+        let user = self.user.as_deref().unwrap_or("");
+        match (self.verbose, user.is_empty()) {
+            (true, true) => "/W\r\n".to_string(),
+            (true, false) => format!("/W {user}\r\n"),
+            (false, _) => format!("{user}\r\n"),
+        }
+    }
+}

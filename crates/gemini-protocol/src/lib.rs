@@ -48,6 +48,8 @@ pub mod gemtext;
 
 #[cfg(feature = "client")]
 pub mod client;
+#[cfg(feature = "server")]
+pub mod server;
 #[cfg(feature = "tls")]
 pub mod titan;
 #[cfg(feature = "tls")]
@@ -64,3 +66,6 @@ pub use client::{ClientError, DEFAULT_PORT, Response, Status, exchange, parse_re
 pub use client::fetch;
 #[cfg(feature = "tls")]
 pub use tofu::{InMemoryTofu, PermissiveTofu, TofuStore, set_trust_store};
+
+#[cfg(feature = "server")]
+pub use server::{Reply, ServerConfig, acceptor, serve};

@@ -82,6 +82,47 @@ pub fn parse_header(line: &str) -> Result<PlusHeader, MalformedHeader> {
     }
 }
 
+/// What a Gopher+ retrieval asks for.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum PlusRequest {
+    /// `+`: the item itself. The optional representation names one of the
+    /// alternates the item's `+VIEWS` block advertises.
+    Item(Option<String>),
+    /// `!`: this item's attribute blocks.
+    Attributes,
+    /// `$`: the attribute blocks of every item in a directory.
+    DirectoryAttributes,
+}
+
+impl PlusRequest {
+    /// The token appended after the request's second TAB.
+    pub fn token(&self) -> String {
+        match self {
+            Self::Item(None) => "+".to_string(),
+            Self::Item(Some(view)) => format!("+{view}"),
+            Self::Attributes => "!".to_string(),
+            Self::DirectoryAttributes => "$".to_string(),
+        }
+    }
+
+    /// Read a token back, which is what a server does with the third field.
+    ///
+    /// `$` may carry a filter of requested block names (`$+VIEWS+ABSTRACT`);
+    /// that filter is advisory, so it is accepted and not modelled.
+    pub fn from_token(token: &str) -> Option<Self> {
+        let token = token.trim_end_matches(['\r', '\n']);
+        match token.chars().next()? {
+            '+' => Some(Self::Item({
+                let view = &token[1..];
+                (!view.is_empty()).then(|| view.to_string())
+            })),
+            '!' => Some(Self::Attributes),
+            '$' => Some(Self::DirectoryAttributes),
+            _ => None,
+        }
+    }
+}
+
 // ── Attribute blocks ───────────────────────────────────────────────────────
 
 /// One Gopher+ attribute block.
