@@ -15,8 +15,9 @@ protocol's author.
 | [`finger-protocol`](crates/finger-protocol) | Finger (`finger://`, RFC 1288) and WebFinger (RFC 7033): the oldest way to ask who someone is, and the one the fediverse uses. |
 | [`gemini-protocol`](crates/gemini-protocol) | Gemini (`gemini://`), the gemtext grammar, TOFU pinning, and titan (`titan://`) upload. |
 | [`kepler-protocol`](crates/kepler-protocol) | Kepler (`kepler://`, `keplers://`): gemini's shape plus the small web's only cache model. |
+| [`dict-protocol`](crates/dict-protocol) | DICT (`dict://`, RFC 2229): networked dictionary lookup. A command loop, not a one-shot fetch. |
 
-All eight are MIT licensed, published to crates.io, and usable without anything
+All nine are MIT licensed, published to crates.io, and usable without anything
 else in this workspace.
 
 Where a protocol has a successor, it lives in the same crate rather than a new

@@ -1,0 +1,31 @@
+[package]
+name = "dict-protocol"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+license = "MIT"
+repository = "https://github.com/merely-made/smolweb"
+description = "An implementation of the DICT protocol (RFC 2229, dict://): async session client and wire grammar. Look words up in networked dictionaries, with quoted parameters and dot-stuffed text blocks handled."
+keywords = ["dict", "dictionary", "rfc2229", "protocol", "smolweb"]
+categories = ["network-programming"]
+readme = "README.md"
+
+[features]
+# The grammar is dep-free and always compiled; the session client needs a
+# runtime.
+default = ["client"]
+client = ["dep:tokio"]
+
+[dependencies]
+tokio = { version = "1", default-features = false, features = [
+    "net",
+    "io-util",
+], optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = [
+    "macros",
+    "rt",
+    "io-util",
+    "time",
+] }
