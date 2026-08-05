@@ -10,6 +10,7 @@ members = [
     "crates/gemini-protocol",
     "crates/kepler-protocol",
     "crates/dict-protocol",
+    "crates/fsp-protocol",
 ]
 
 [workspace.package]
