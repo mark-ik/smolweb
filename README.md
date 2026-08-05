@@ -14,8 +14,9 @@ protocol's author.
 | [`gopher-protocol`](crates/gopher-protocol) | Gopher (`gopher://`) and Gopher+: the elder one. RFC 1436 menus, RFC 4266 URLs, Gopher+ attributes, views, and ASK forms. |
 | [`finger-protocol`](crates/finger-protocol) | Finger (`finger://`, RFC 1288) and WebFinger (RFC 7033): the oldest way to ask who someone is, and the one the fediverse uses. |
 | [`gemini-protocol`](crates/gemini-protocol) | Gemini (`gemini://`), the gemtext grammar, TOFU pinning, and titan (`titan://`) upload. |
+| [`kepler-protocol`](crates/kepler-protocol) | Kepler (`kepler://`, `keplers://`): gemini's shape plus the small web's only cache model. |
 
-All seven are MIT licensed, published to crates.io, and usable without anything
+All eight are MIT licensed, published to crates.io, and usable without anything
 else in this workspace.
 
 Where a protocol has a successor, it lives in the same crate rather than a new

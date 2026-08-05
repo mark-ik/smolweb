@@ -1,0 +1,42 @@
+[package]
+name = "kepler-protocol"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+license = "MIT"
+repository = "https://github.com/merely-made/smolweb"
+description = "An implementation of the Kepler protocol (kepler:// and keplers://): async client and wire grammar. Gemini's shape plus the small web's only cache model, with declared body lengths, last-updated and expiry, and language negotiation."
+keywords = ["kepler", "smolweb", "protocol", "gemini", "cache"]
+categories = ["network-programming"]
+readme = "README.md"
+
+[features]
+# The wire grammar is dep-free and always compiled. The client needs a
+# runtime; TLS is separate again because kepler, unlike gemini, does not
+# mandate encryption: `kepler://` is plaintext and `keplers://` is not.
+default = ["client"]
+client = ["dep:tokio", "dep:url"]
+tls = ["client", "dep:rustls", "dep:tokio-rustls"]
+
+[dependencies]
+url = { version = "2.5", optional = true }
+tokio = { version = "1", default-features = false, features = [
+    "net",
+    "io-util",
+], optional = true }
+rustls = { version = "0.23", default-features = false, features = [
+    "ring",
+    "std",
+    "tls12",
+], optional = true }
+tokio-rustls = { version = "0.26", default-features = false, features = [
+    "ring",
+    "tls12",
+], optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = [
+    "macros",
+    "rt",
+    "io-util",
+] }
