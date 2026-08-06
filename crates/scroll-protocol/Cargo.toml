@@ -1,0 +1,35 @@
+[package]
+name = "scroll-protocol"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+license = "MIT"
+repository = "https://github.com/merely-made/smolweb"
+description = "An implementation of the Scroll protocol (scroll://) and the scrolltext format: async client with language negotiation, document metadata, UDC classification, and abstracts, plus a dependency-free text/scroll parser."
+keywords = ["scroll", "scrolltext", "smolweb", "gemini", "protocol"]
+categories = ["network-programming"]
+readme = "README.md"
+
+[features]
+# The grammar and the scrolltext format are dep-free and always compiled.
+# `client` is the exchange over any stream; `tls` adds the mandatory-TLS
+# fetch, riding gemini-protocol's TOFU seam because scroll's spec declares
+# gemini's trust posture in so many words.
+default = ["tls"]
+client = ["dep:tokio", "dep:url"]
+tls = ["client", "gemini-protocol/tls"]
+
+[dependencies]
+url = { version = "2.5", optional = true }
+tokio = { version = "1", default-features = false, features = [
+    "net",
+    "io-util",
+], optional = true }
+gemini-protocol = { version = "0.1.2", path = "../gemini-protocol", default-features = false, optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = [
+    "macros",
+    "rt",
+    "io-util",
+] }

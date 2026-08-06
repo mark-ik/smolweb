@@ -218,12 +218,31 @@ pub async fn fetch(url: &str) -> Result<Response, ClientError> {
 /// [`fetch`], for a caller that already has a parsed [`Url`].
 #[cfg(feature = "tls")]
 pub async fn fetch_url(url: &Url) -> Result<Response, ClientError> {
-    use crate::{tls, tofu};
-
     let host = url
         .host_str()
         .ok_or_else(|| ClientError::BadUrl("gemini URL has no host".into()))?;
     let port = url.port().unwrap_or(DEFAULT_PORT);
+    let mut stream = tofu_connect(host, port).await?;
+    exchange(url, &mut stream).await
+}
+
+/// Open a TLS connection with trust-on-first-use pinning, without speaking
+/// any protocol over it.
+///
+/// This is gemini's trust posture offered as a building block: the host's
+/// pinned fingerprint is checked during the handshake, a first contact is
+/// pinned once it completes, and a changed certificate surfaces as
+/// [`ClientError::CertificateChanged`] before a single application byte is
+/// written. Protocols that declare "TOFU, as in gemini" (scroll does, in so
+/// many words) ride this seam and share the same installed
+/// [`TofuStore`](crate::TofuStore), so a host that pins a certificate once
+/// has pinned it for every protocol that trusts this way.
+#[cfg(feature = "tls")]
+pub async fn tofu_connect(
+    host: &str,
+    port: u16,
+) -> Result<tokio_rustls::client::TlsStream<TcpStream>, ClientError> {
+    use crate::{tls, tofu};
 
     // Look the host's pin up before connecting (so the verifier stays
     // 'static), then wrap TCP in a pinning TLS handshake.
@@ -236,7 +255,7 @@ pub async fn fetch_url(url: &Url) -> Result<Response, ClientError> {
         .map_err(|e| ClientError::Connect(format!("tcp {host}:{port}: {e}")))?;
     let server_name = ServerName::try_from(host.to_string())
         .map_err(|e| ClientError::Connect(format!("server name {host}: {e}")))?;
-    let mut stream = match connector.connect(server_name, tcp).await {
+    let stream = match connector.connect(server_name, tcp).await {
         Ok(tls) => tls,
         Err(e) => {
             // A pin mismatch surfaces richly; the verifier recorded what it
@@ -261,7 +280,7 @@ pub async fn fetch_url(url: &Url) -> Result<Response, ClientError> {
         store.pin(host, fingerprint);
     }
 
-    exchange(url, &mut stream).await
+    Ok(stream)
 }
 
 #[cfg(test)]

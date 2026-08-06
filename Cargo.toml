@@ -11,6 +11,7 @@ members = [
     "crates/kepler-protocol",
     "crates/dict-protocol",
     "crates/fsp-protocol",
+    "crates/scroll-protocol",
 ]
 
 [workspace.package]

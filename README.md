@@ -17,8 +17,9 @@ protocol's author.
 | [`kepler-protocol`](crates/kepler-protocol) | Kepler (`kepler://`, `keplers://`): gemini's shape plus the small web's only cache model. |
 | [`dict-protocol`](crates/dict-protocol) | DICT (`dict://`, RFC 2229): networked dictionary lookup. A command loop, not a one-shot fetch. |
 | [`fsp-protocol`](crates/fsp-protocol) | FSP (`fsp://`): anonymous file transfer over UDP, with its own sequencing and checksums. |
+| [`scroll-protocol`](crates/scroll-protocol) | Scroll (`scroll://`) and scrolltext: language negotiation, document metadata, UDC classification, abstracts. |
 
-All ten are MIT licensed, published to crates.io, and usable without anything
+All eleven are MIT licensed, published to crates.io, and usable without anything
 else in this workspace.
 
 Where a protocol has a successor, it lives in the same crate rather than a new

@@ -63,7 +63,7 @@ pub use gemtext::{GemLine, parse as parse_gemtext};
 pub use client::{ClientError, DEFAULT_PORT, Response, Status, exchange, parse_response};
 
 #[cfg(feature = "tls")]
-pub use client::fetch;
+pub use client::{fetch, tofu_connect};
 #[cfg(feature = "tls")]
 pub use tofu::{InMemoryTofu, PermissiveTofu, TofuStore, set_trust_store};
 
