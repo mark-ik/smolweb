@@ -103,19 +103,48 @@ pub async fn fetch(url: &str) -> Result<Response, ClientError> {
     }
     request.push_str("\r\n");
 
-    let body = exchange(host, port, request.as_bytes()).await?;
+    let body = exchange(&url, host, port, request.as_bytes()).await?;
     Ok(Response {
         mime: mime_for_item_type(item_type).to_string(),
         body,
     })
 }
 
-/// Open a plaintext TCP connection, send `request`, and read the whole reply to
-/// EOF (gopher servers close the stream when done).
-async fn exchange(host: &str, port: u16, request: &[u8]) -> Result<Vec<u8>, ClientError> {
+/// Open a connection (plaintext for `gopher://`, TLS for `gophers://`), send
+/// `request`, and read the whole reply to EOF (gopher servers close the
+/// stream when done).
+async fn exchange(
+    url: &Url,
+    host: &str,
+    port: u16,
+    request: &[u8],
+) -> Result<Vec<u8>, ClientError> {
+    if url.scheme() == "gophers" {
+        #[cfg(feature = "tls")]
+        {
+            let mut stream = crate::tls::connect(host, port).await?;
+            return send_and_read(&mut stream, request).await;
+        }
+        #[cfg(not(feature = "tls"))]
+        {
+            // Refusing beats silently sending a gophers:// request in the
+            // clear, which is what ignoring the scheme would do.
+            return Err(ClientError::BadUrl(
+                "gophers:// needs the `tls` feature".into(),
+            ));
+        }
+    }
     let mut stream = TcpStream::connect((host, port))
         .await
         .map_err(|e| ClientError::Connect(format!("tcp {host}:{port}: {e}")))?;
+    send_and_read(&mut stream, request).await
+}
+
+/// Send a request over an already-connected stream and read the reply to EOF.
+async fn send_and_read<S>(stream: &mut S, request: &[u8]) -> Result<Vec<u8>, ClientError>
+where
+    S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin,
+{
     stream
         .write_all(request)
         .await
@@ -182,7 +211,7 @@ pub async fn fetch_plus(url: &str, request: PlusRequest) -> Result<PlusReply, Cl
     let search = url.query().unwrap_or("");
 
     let line = format!("{selector}\t{search}\t{}\r\n", request.token());
-    let (header, body) = plus_exchange(host, port, line.as_bytes()).await?;
+    let (header, body) = plus_exchange(&url, host, port, line.as_bytes()).await?;
 
     if header == PlusHeader::Error {
         return Err(ClientError::PlusError(
@@ -207,13 +236,35 @@ pub async fn fetch_directory_attributes(url: &str) -> Result<Vec<AttributeBlock>
 /// Send a Gopher+ request and read the reply according to its header, rather
 /// than always reading to EOF: a counted body stops at its count.
 async fn plus_exchange(
+    url: &Url,
     host: &str,
     port: u16,
     request: &[u8],
 ) -> Result<(PlusHeader, Vec<u8>), ClientError> {
-    let mut stream = TcpStream::connect((host, port))
+    if url.scheme() == "gophers" {
+        #[cfg(feature = "tls")]
+        {
+            let stream = crate::tls::connect(host, port).await?;
+            return plus_over(stream, request).await;
+        }
+        #[cfg(not(feature = "tls"))]
+        {
+            return Err(ClientError::BadUrl(
+                "gophers:// needs the `tls` feature".into(),
+            ));
+        }
+    }
+    let stream = TcpStream::connect((host, port))
         .await
         .map_err(|e| ClientError::Connect(format!("tcp {host}:{port}: {e}")))?;
+    plus_over(stream, request).await
+}
+
+/// The Gopher+ transaction over an already-connected stream.
+async fn plus_over<S>(mut stream: S, request: &[u8]) -> Result<(PlusHeader, Vec<u8>), ClientError>
+where
+    S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin,
+{
     stream
         .write_all(request)
         .await

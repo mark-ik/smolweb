@@ -11,15 +11,16 @@ protocol's author.
 | [`spartan-protocol`](crates/spartan-protocol) | Spartan (`spartan://`): plaintext smolweb with uploads via the `=:` prompt. |
 | [`nex-protocol`](crates/nex-protocol) | Nex (`nex://`): the minimal one — plaintext TCP, no TLS, no status codes. |
 | [`guppy-protocol`](crates/guppy-protocol) | Guppy v0.4.4 (`guppy://`): smolweb over UDP, with chunking, acks, and retransmission. |
-| [`gopher-protocol`](crates/gopher-protocol) | Gopher (`gopher://`) and Gopher+: the elder one. RFC 1436 menus, RFC 4266 URLs, Gopher+ attributes, views, and ASK forms. |
+| [`gopher-protocol`](crates/gopher-protocol) | Gopher (`gopher://`), Gopher+, and gophers (`gophers://`, TLS): the elder one. RFC 1436 menus, RFC 4266 URLs, Gopher+ attributes, views, and ASK forms. |
 | [`finger-protocol`](crates/finger-protocol) | Finger (`finger://`, RFC 1288) and WebFinger (RFC 7033): the oldest way to ask who someone is, and the one the fediverse uses. |
 | [`gemini-protocol`](crates/gemini-protocol) | Gemini (`gemini://`), the gemtext grammar, TOFU pinning, and titan (`titan://`) upload. |
 | [`kepler-protocol`](crates/kepler-protocol) | Kepler (`kepler://`, `keplers://`): gemini's shape plus the small web's only cache model. |
 | [`dict-protocol`](crates/dict-protocol) | DICT (`dict://`, RFC 2229): networked dictionary lookup. A command loop, not a one-shot fetch. |
 | [`fsp-protocol`](crates/fsp-protocol) | FSP (`fsp://`): anonymous file transfer over UDP, with its own sequencing and checksums. |
 | [`scroll-protocol`](crates/scroll-protocol) | Scroll (`scroll://`) and scrolltext: language negotiation, document metadata, UDC classification, abstracts. |
+| [`text-protocol`](crates/text-protocol) | Text Protocol (`text://`): the deliberately minimal one. Three status codes, everything plain text. |
 
-All eleven are MIT licensed, published to crates.io, and usable without anything
+All twelve are MIT licensed, published to crates.io, and usable without anything
 else in this workspace.
 
 Where a protocol has a successor, it lives in the same crate rather than a new

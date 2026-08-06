@@ -62,6 +62,8 @@ pub mod plus;
 pub mod client;
 #[cfg(feature = "server")]
 pub mod server;
+#[cfg(feature = "tls")]
+mod tls;
 
 pub use menu::{GopherItem, GopherKind, GopherPlus, parse as parse_menu};
 pub use plus::{AskDirective, AttributeBlock, PlusHeader, PlusRequest, View};

@@ -1,0 +1,42 @@
+[package]
+name = "text-protocol"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+license = "MIT"
+repository = "https://github.com/merely-made/smolweb"
+description = "An implementation of the Text Protocol (text://): the deliberately minimal smolweb protocol. IRI in, one of exactly three status codes out, everything text/plain. Plain-TCP and TLS transports; the grammar is dependency-free."
+keywords = ["text-protocol", "smolweb", "protocol", "gemini", "minimal"]
+categories = ["network-programming"]
+readme = "README.md"
+
+[features]
+# The grammar is dep-free and always compiled. The spec's three transports
+# ride features by cost: plain TCP (its Mercury port), TLS (its Gemini port).
+# The Noise transport (its Apollo port) is not implemented.
+default = ["client"]
+client = ["dep:tokio", "dep:url"]
+tls = ["client", "dep:rustls", "dep:tokio-rustls"]
+
+[dependencies]
+url = { version = "2.5", optional = true }
+tokio = { version = "1", default-features = false, features = [
+    "net",
+    "io-util",
+], optional = true }
+rustls = { version = "0.23", default-features = false, features = [
+    "ring",
+    "std",
+    "tls12",
+], optional = true }
+tokio-rustls = { version = "0.26", default-features = false, features = [
+    "ring",
+    "tls12",
+], optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = [
+    "macros",
+    "rt",
+    "io-util",
+] }

@@ -1,6 +1,6 @@
 [package]
 name = "gopher-protocol"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 rust-version.workspace = true
 license = "MIT"
@@ -20,6 +20,10 @@ client = ["dep:tokio", "dep:url"]
 # Serving is the same wire protocol read in the other direction, and answers
 # both generations. Off by default: a client must not carry listeners.
 server = ["dep:tokio", "dep:log", "tokio/rt", "tokio/time", "tokio/macros"]
+# gophers://: the identical wire inside TLS on the same port 70. There is no
+# formal spec; the scheme, port, and TLS-wrap are implemented per
+# interoperating practice (michael-lazar/smolnet-portal proxies it this way).
+tls = ["client", "dep:rustls", "dep:tokio-rustls"]
 
 [dependencies]
 url = { version = "2.5", optional = true }
@@ -28,6 +32,15 @@ tokio = { version = "1", default-features = false, features = [
     "io-util",
 ], optional = true }
 log = { version = "0.4", optional = true }
+rustls = { version = "0.23", default-features = false, features = [
+    "ring",
+    "std",
+    "tls12",
+], optional = true }
+tokio-rustls = { version = "0.26", default-features = false, features = [
+    "ring",
+    "tls12",
+], optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", default-features = false, features = [
