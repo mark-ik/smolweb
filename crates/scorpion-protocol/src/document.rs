@@ -364,7 +364,7 @@ mod tests {
         };
         assert_eq!(block.tag(), 0xA3);
 
-        let round = parse(&encode(&[block.clone()]).unwrap()).unwrap();
+        let round = parse(&encode(std::slice::from_ref(&block)).unwrap()).unwrap();
         assert_eq!(round, vec![block]);
     }
 
