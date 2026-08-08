@@ -13,6 +13,7 @@ members = [
     "crates/fsp-protocol",
     "crates/scroll-protocol",
     "crates/text-protocol",
+    "crates/scorpion-protocol",
 ]
 
 [workspace.package]

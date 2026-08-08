@@ -19,9 +19,10 @@ protocol's author.
 | [`fsp-protocol`](crates/fsp-protocol) | FSP (`fsp://`): anonymous file transfer over UDP, with its own sequencing and checksums. |
 | [`scroll-protocol`](crates/scroll-protocol) | Scroll (`scroll://`) and scrolltext: language negotiation, document metadata, UDC classification, abstracts. |
 | [`text-protocol`](crates/text-protocol) | Text Protocol (`text://`): the deliberately minimal one. Three status codes, everything plain text. |
+| [`scorpion-protocol`](crates/scorpion-protocol) | Scorpion (`scorpion://`, `scorpions://`): the wide one. Four subprotocols, range requests, uploads with conflict detection, and a binary block document format. |
 
-All twelve are MIT licensed, published to crates.io, and usable without anything
-else in this workspace.
+All thirteen are MIT licensed, published to crates.io, and usable without
+anything else in this workspace.
 
 Where a protocol has a successor, it lives in the same crate rather than a new
 one, because the successors are supersets: a plain RFC 1436 menu is simply a

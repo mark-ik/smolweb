@@ -1,0 +1,48 @@
+[package]
+name = "scorpion-protocol"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+license = "MIT"
+repository = "https://github.com/merely-made/smolweb"
+description = "An implementation of the Scorpion protocol (scorpion://, scorpions://): four subprotocols (receive, send, interactive, meta), range requests, and the binary block document format. A dependency-free wire and document core, with an optional async client and server."
+keywords = ["scorpion", "smolweb", "smolnet", "gemini", "protocol"]
+categories = ["network-programming", "parser-implementations"]
+
+[features]
+default = []
+# An async client over any stream, plus TCP dialling.
+client = ["dep:tokio", "dep:url"]
+# TLS for `scorpions://`, with trust-on-first-use pinning left to the caller.
+tls = ["client", "dep:tokio-rustls", "dep:rustls", "dep:rustls-pki-types"]
+# Serve requests from a `Source`.
+server = ["dep:tokio", "dep:url"]
+
+[dependencies]
+# Everything below is optional on purpose: the wire grammar and the document
+# format compile with no dependencies at all, so a consumer that only parses
+# pays for nothing.
+tokio = { version = "1", default-features = false, features = [
+    "net",
+    "io-util",
+    "time",
+], optional = true }
+url = { version = "2.5", optional = true }
+tokio-rustls = { version = "0.26", default-features = false, features = [
+    "ring",
+], optional = true }
+rustls = { version = "0.23", default-features = false, features = [
+    "ring",
+    "std",
+], optional = true }
+rustls-pki-types = { version = "1", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+    "net",
+    "io-util",
+    "time",
+] }
